@@ -5,9 +5,10 @@ import logging
 import sys
 import time
 from elftools.elf.elffile import ELFFile
-from avr32 import AVR32, FLASH_BASE
-from ftdi_jtag_adapter import FTDIJtagAdapter
-from jtag_adapter import JtagAdapter
+
+from hs3program.avr32 import AVR32, FLASH_BASE
+from hs3program.ftdi_jtag_adapter import FTDIJtagAdapter
+from hs3program.jtag_adapter import JtagAdapter
 
 ADAPTERS = {
     "busblaster_v25": lambda frequency: FTDIJtagAdapter(0x0403, 0x6010, 0x0000, 0x0010, frequency=frequency, nSRST=(0x0200, 0x0800), nTRST=(0x0100, 0x0400)),
@@ -57,7 +58,7 @@ def program_segment(dev: AVR32, address: int, mem_size: int, data: bytes, do_era
             sys.stdout.flush()
 
 
-def main(programmer, flash=None, no_verify=False, chip_erase=True, detect=False, reset=False, fuses=None, dump=None):
+def program(programmer, flash=None, no_verify=False, chip_erase=True, detect=False, reset=False, fuses=None, dump=None):
     adapter = get_adapter(programmer, 12e6)
     try:
         adapter.SetSignal("TCK", False)
@@ -117,7 +118,7 @@ def main(programmer, flash=None, no_verify=False, chip_erase=True, detect=False,
         adapter.Close()
 
 
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--programmer", "-p", default="digilent_hs3", type=str, choices=ADAPTERS.keys(), help="Which JTAG adapter to use")
     parser.add_argument("--chip_erase", "-E", action="store_true", help="Perform full chip erase.")
@@ -141,4 +142,7 @@ if __name__ == "__main__":
     )
     logging.root.setLevel(level)
 
-    main(**vars(args))
+    program(**vars(args))
+
+if __name__ == "__main__":
+    main()

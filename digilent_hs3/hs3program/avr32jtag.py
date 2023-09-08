@@ -2,7 +2,7 @@
 import logging
 import struct
 
-from jtag_adapter import JtagAdapter, JtagState
+from hs3program.jtag_adapter import JtagAdapter, JtagState
 
 # JTAG instructions
 IDCODE = 0x01

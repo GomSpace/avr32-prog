@@ -2,8 +2,8 @@
 import time
 import typing
 
-from avr32jtag import AVR32Jtag
-from jtag_adapter import JtagAdapter
+from hs3program.avr32jtag import AVR32Jtag
+from hs3program.jtag_adapter import JtagAdapter
 
 FSR_FRDY_MASK = 0x00000001
 FSR_FRDY_OFFSET = 0

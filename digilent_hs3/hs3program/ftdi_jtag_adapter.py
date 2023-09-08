@@ -4,7 +4,7 @@ import struct
 import typing
 
 from pyftdi.ftdi import Ftdi
-from jtag_adapter import JtagAdapter, JtagState, NavigateState, NextState
+from hs3program.jtag_adapter import JtagAdapter, JtagState, NavigateState, NextState
 
 
 DIR = 0x000B

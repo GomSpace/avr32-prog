@@ -21,13 +21,17 @@ This repository is either included in a product manual or downloaded directly fr
 Installation
 ============
 
-Install Python dependencies::
+Please make sure that your current working directory is the root of avr32-prog::
 
-  $ pip install -r requirements.txt
+  $ cd <path-to-avr32-prog>
+
+Then install the Python package using::
+
+  $ pip install digilent_hs3/
 
 Copy udev rules to /etc/udev/rules.d::
 
-  $ sudo cp 99-ftdi.rules /etc/udev/rules.d/
+  $ sudo cp digilent_hs3/99-ftdi.rules /etc/udev/rules.d/
 
 Run commands to reload rules::
 
@@ -35,16 +39,6 @@ Run commands to reload rules::
   $ sudo udevadm trigger
 
 Disconnect- and reconnect the programmer.
-
-It is recommended to copy- or move the avr32-prog to the home directory, which can be achieved using::
-
-  $ mv avr32-prog ~/avr32-prog
-
-or::
-
-  $ cp -r avr32-prog ~/
-
-The rest of this guide assumes that the folder is moved to this location.
 
 Hardware setup
 ==============
@@ -66,15 +60,10 @@ The NanoMind A3200 is powered via the FTDI adapter using a 3.3 V power line.
    Block diagram of connected components
 
 
-
 Usage
 =====
 
-While it is possible to execute the Digilent HS3 programming script directly with Python 3, it is recommended to create a BASH alias::
-
-  $ alias hs3program=~/avr32-prog/digilent_hs3/python/avr32_prog.py
-
-Now, the script can be used from any Linux terminal using the :code:`hs3program` command::
+After installation, the script can be used from any Linux terminal using the :code:`hs3program` command::
 
   $ hs3program --help
   usage: avr32_prog.py [-h] [--programmer {busblaster_v25,digilent_hs3,openmoko_dbv3}] [--chip_erase]
@@ -100,3 +89,7 @@ Now, the script can be used from any Linux terminal using the :code:`hs3program`
 The most common set of options for the NanoMind A3200 (and NanoCom- and NanoPower products) will be::
 
   $ hs3program -p digilent_hs3 -R -E -f <path to .elf file>
+
+E.g.::
+
+  $ hs3program -p digilent_hs3 -R -E -f ~/a3200-sdk/build/nanomind.elf
