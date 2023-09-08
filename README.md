@@ -1,22 +1,13 @@
-# Flashing tool for AVR32UC3 devices
+# AVR32 programming tools
+This repository contains a variety of flashing tools for AVR32UC3 devices
 
-This tool should support flashing UC3 devices through most FTDI MPSSE based JTAG dongles.
+This set of tools should support flashing UC3 devices through most FTDI MPSSE based JTAG dongles, such as the busblaster_v25, digilent_hs3, openmoko_dbv3 and avr-dragon.
 
-## Installing
+# documentation
+Documentation is created as 2 separate RST documents, 1 for busblaster_v25, digilent_hs3 and openmoko_dbv3 and one for avr-dragon.
 
-### Dependencies
+Both sets of documentation can be included in existing RST documentation or generated manually using:
 ```
-pip install -e requirements.txt
+sudo snap install rst2pdf
+rst2pdf digilent_hs3/doc/hs3_programming.rst hs3_programming.pdf
 ```
-
-### Permissions (Linux)
-
-Copy `support/99-ftdi.rules` to `/etc/udev/rules.d/`
-
-Run
-```
-udevadm control --reload-rules
-udevadm trigger
-```
-
-In some cases you might need to disconnect and connect the target JTAG adapter.
