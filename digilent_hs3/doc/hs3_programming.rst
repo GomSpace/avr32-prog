@@ -14,6 +14,8 @@ Prerequisites:
 1. The device is powered on and connected to the programmer
 2. The current working directory is avr32-prog/digilent_hs3
 
+   * This is usually achieved by issuing :code:`cd tools/avr32-prog/digilent_hs3`
+
 Installation
 ============
 
