@@ -1,2 +1,5 @@
 *.pyc
 *.log
+*.pdf
+*.egg-info
+build
