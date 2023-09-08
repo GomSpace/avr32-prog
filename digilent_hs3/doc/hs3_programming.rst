@@ -5,16 +5,18 @@ Introduction
 ------------
 
 This guide details how to program an AVR32 MCU on one or more GomSpace products using the Digilent HS3 JTAG programmer.
-While the guide is mostly tailered towards the NanoMind A3200, the guide is also usable for several NanoCom- and NanoPower products.
+While the guide is tailered towards the NanoMind A3200, the guide is also usable for several NanoCom- and NanoPower products.
 
-This guide will not describe how to connect the programmer or how to power on the product. Please refer to other sections of the product manual.
+This guide demonstrates a basic hardware setup using a NanoMind A3200. For further information on connections and power, please refer to the product manual.
 
-Prerequisites:
+Prerequisites to use this guide:
 
 1. The device is powered on and connected to the programmer
-2. The current working directory is avr32-prog/digilent_hs3
+2. An intermediate understanding of Debian-based Linux
 
-   * This is usually achieved by issuing :code:`cd tools/avr32-prog/digilent_hs3`
+This repository is either included in a product manual or downloaded directly from Github using::
+
+  $ git clone git@github.com:GomSpace/avr32-prog.git
 
 Installation
 ============
@@ -33,6 +35,16 @@ Run commands to reload rules::
   $ sudo udevadm trigger
 
 Disconnect- and reconnect the programmer.
+
+It is recommended to copy- or move the avr32-prog to the home directory, which can be achieved using::
+
+  $ mv avr32-prog ~/avr32-prog
+
+or::
+
+  $ cp -r avr32-prog ~/
+
+The rest of this guide assumes that the folder is moved to this location.
 
 Hardware setup
 ==============
@@ -58,25 +70,11 @@ The NanoMind A3200 is powered via the FTDI adapter using a 3.3 V power line.
 Usage
 =====
 
-The :code:`avr32_prog.py` script is used to program an AVR32 MCU using Python 3.6 and above.
+While it is possible to execute the Digilent HS3 programming script directly with Python 3, it is recommended to create a BASH alias::
 
-Help for all command-line options can be listed by using::
+  $ alias hs3program=~/avr32-prog/digilent_hs3/python/avr32_prog.py
 
-  $ python3 python/avr32_prog.py --help
-
-The most common set of options for the NanoMind A3200 (and NanoCom- and NanoPower products) will be::
-
-  $ python3 python/avr32_prog.py -p digilent_hs3 -R -E -f <path to .elf file>
-
-It is possible to call the :code:`avr32_prog.py` script from an arbitrary directory using absolute paths::
-
-  $ python3 ~/a3200-sdk/tools/digilent_hs3/python/avr32_prog.py -p digilent_hs3 -R -E -f ~/a3200-sdk/build/nanomind.elf
-
-By creating a BASH alias, the command can be shortened further::
-
-  $ alias hs3program=~/a3200-sdk/tools/avr32-prog/digilent_hs3/python/avr32_prog.py
-
-Now, the script can be used from any terminal using the :code:`hs3program` command::
+Now, the script can be used from any Linux terminal using the :code:`hs3program` command::
 
   $ hs3program --help
   usage: avr32_prog.py [-h] [--programmer {busblaster_v25,digilent_hs3,openmoko_dbv3}] [--chip_erase]
@@ -97,3 +95,8 @@ Now, the script can be used from any terminal using the :code:`hs3program` comma
     --fuses FUSES, -GP FUSES
                           Program fuses
     --verbose, -v         Verbose log output
+
+
+The most common set of options for the NanoMind A3200 (and NanoCom- and NanoPower products) will be::
+
+  $ hs3program -p digilent_hs3 -R -E -f <path to .elf file>

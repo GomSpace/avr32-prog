@@ -1,10 +1,10 @@
 # AVR32 programming tools
 This repository contains a variety of flashing tools for AVR32UC3 devices
 
-This set of tools should support flashing UC3 devices through most FTDI MPSSE based JTAG dongles, such as the busblaster_v25, digilent_hs3, openmoko_dbv3 and avr-dragon.
+This set of tools should support flashing UC3 devices through most FTDI MPSSE based JTAG dongles, such as the Digilent hs3 and AVR dragon.
 
-# documentation
-Documentation is created as 2 separate RST documents, 1 for busblaster_v25, digilent_hs3 and openmoko_dbv3 and one for avr-dragon.
+# Documentation
+Documentation is created as 2 separate RST documents, one for Digilent hs3 and one for AVR dragon.
 
 Both sets of documentation can be included in existing RST documentation or generated manually using:
 ```
