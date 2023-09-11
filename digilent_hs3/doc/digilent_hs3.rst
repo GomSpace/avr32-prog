@@ -1,8 +1,11 @@
 
 .. _hs3_programmer:
 
+Programming using Digilent HS3
+------------------------------
+
 Introduction
-------------
+============
 
 This guide details how to program an AVR32 MCU on one or more GomSpace products using the Digilent HS3 JTAG programmer.
 While the guide is tailered towards the NanoMind A3200, the guide is also usable for several NanoCom- and NanoPower products.

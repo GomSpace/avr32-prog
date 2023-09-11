@@ -1,8 +1,9 @@
 
 .. _avr_toolchain:
 
-Introduction
-------------
+Installing the AVR toolchain
+----------------------------
+
 This guide details how to install the GomSpace AVR32 toolchain, which is necessary to build- and program software for AVR32 based devices.
 
 The A3200 toolchain has been verified on the following Ubuntu distributions:
@@ -11,10 +12,6 @@ The A3200 toolchain has been verified on the following Ubuntu distributions:
 - Ubuntu 18.04.6 LTS
 - Ubuntu 20.04.6 LTS
 - Ubuntu 22.04.3 LTS
-
-
-
-
 
 To install the toolchain, install Ubuntu prerequisites::
 

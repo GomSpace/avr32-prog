@@ -1,8 +1,11 @@
 
 .. _avr_programmer:
 
+Programming using AVR dragon
+----------------------------
+
 Introduction
-------------
+============
 
 This guide details how to program an AVR32 MCU on one or more GomSpace products using the AVR dragon JTAG programmer.
 While the guide is tailered towards the NanoMind A3200, the guide is also usable for several NanoCom- and NanoPower products.
