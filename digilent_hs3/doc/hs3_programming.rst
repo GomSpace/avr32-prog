@@ -13,6 +13,7 @@ Prerequisites to use this guide:
 
 1. The device is powered on and connected to the programmer
 2. An intermediate understanding of Debian-based Linux
+3. The AVR toolchain is installed
 
 This repository is either included in a product manual or downloaded directly from Github using::
 
@@ -37,6 +38,10 @@ Run commands to reload rules::
 
   $ sudo udevadm control --reload-rules
   $ sudo udevadm trigger
+
+Add user to dialout::
+
+  $ sudo adduser $USER dialout
 
 Disconnect- and reconnect the programmer.
 
