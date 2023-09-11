@@ -3,3 +3,4 @@
 *.pdf
 *.egg-info
 build
+.vscode
