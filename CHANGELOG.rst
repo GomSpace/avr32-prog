@@ -1,6 +1,12 @@
 avr32-prog
 ==========
 
+**2.2.0 (2023-09-14)**
+
+- Feature: Remove dry-run from avr toolchain install script
+- Bug: Fix grep: command not found in avr toolchain install script
+- Bug: Add symbolic link from libmpfr.so.4 to libmpfr.so.6 in avr toolchain install script on Ubuntu 18
+
 **2.1.0 (2023-09-11)**
 
 - Feature: Add documentation for including documents in existing documentation

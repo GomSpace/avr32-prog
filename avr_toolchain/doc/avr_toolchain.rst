@@ -8,7 +8,7 @@ This guide details how to install the GomSpace AVR32 toolchain, which is necessa
 
 The A3200 toolchain has been verified on the following Ubuntu distributions:
 
-- Ubuntu 16.04.5 LTS
+- Ubuntu 16.04.7 LTS
 - Ubuntu 18.04.6 LTS
 - Ubuntu 20.04.6 LTS
 - Ubuntu 22.04.3 LTS
@@ -66,3 +66,10 @@ If the toolchain is correctly installed, the output should be::
   COMMANDS
 
   For a list of commands, type "avr32program help commands".
+
+After the installation, please log out and log back in.
+
+The avr32-gcc compiler should now be available::
+
+  $ avr32-gcc
+  avr32-gcc: no input files
