@@ -72,17 +72,17 @@ class AVR32(AVR32Jtag):
             fsrReg = self._GetRegister(self.FSR)
             # If LOCKE bit in FSR set
             if (fsrReg & FSR_LOCKE_MASK) >> FSR_LOCKE_OFFSET:
-                raise Exception(
-                    "Programming of at least one locked lock region has happend since the last read of FSR")
+                raise RuntimeError(
+                    "Programming of at least one locked lock region has happend since the last read of FSR"
+                )
             # If PROGE bit in FSR set
             if (fsrReg & FSR_PROGE_MASK) >> FSR_PROGE_OFFSET:
-                raise Exception(
-                    "An invalid command and/or bad keywords were written in the Flash Command Register")
+                raise RuntimeError("An invalid command and/or bad keywords were written in the Flash Command Register")
             # Read FRDY bit in FSR
             if (fsrReg & FSR_FRDY_MASK) >> FSR_FRDY_OFFSET:
                 return  # FLASH ready for next operation
-        
-        raise Exception("Timeout while waiting for flash controller to be ready")
+
+        raise RuntimeError("Timeout while waiting for flash controller to be ready")
 
     def _ClearPageBuffer(self):
         command = WRITE_PROTECT_KEY | CMD_CLEAR_PAGE_BUFFER
@@ -94,6 +94,7 @@ class AVR32(AVR32Jtag):
     def DeviceSize(self) -> int:
         if not self._device_size:
             self._GetInternalFlashSize()
+        assert self._device_size is not None
         return self._device_size
 
     @property
@@ -104,6 +105,7 @@ class AVR32(AVR32Jtag):
     def PageSize(self) -> int:
         if not self._page_size:
             self._GetInternalFlashSize()
+        assert self._page_size is not None
         return self._page_size
 
     def _GetInternalFlashSize(self):
@@ -146,23 +148,22 @@ class AVR32(AVR32Jtag):
         elif fsz == 14:
             size = 2048 * 1024
         else:
-            raise Exception("Unknown flash size")
+            raise RuntimeError("Unknown flash size")
         self._device_size = size
 
     def UnlockRegion(self, offset, size):
         if (offset >= USER_PAGE_OFFSET) and (offset < USER_PAGE_OFFSET + self.PageSize):
             return  # the user page doesn't need unlocking
-        if (offset >= self.DeviceSize) or (offset+size > self.DeviceSize):
-            raise Exception(
-                "Region to be unlock lies outside flash address space")
-        lastpagetounlock = (offset+size) // self.PageSize
+        if (offset >= self.DeviceSize) or (offset + size > self.DeviceSize):
+            raise RuntimeError("Region to be unlock lies outside flash address space")
+        lastpagetounlock = (offset + size) // self.PageSize
         # compute start offset of page to write to
         page = offset & ~(self.PageSize - 1)
         pagenr = offset // self.PageSize
         while pagenr <= lastpagetounlock:
             command = WRITE_PROTECT_KEY | CMD_UNLOCK_REGION
             # include the correct page number in the command
-            command |= ((pagenr << FCMD_PAGEN_OFFSET) & FCMD_PAGEN_MASK)
+            command |= (pagenr << FCMD_PAGEN_OFFSET) & FCMD_PAGEN_MASK
             # Unlocking page: pagenr
             self._WaitFlashReady()
             self._WriteCommand(command)  # execute unlock page command
@@ -190,13 +191,13 @@ class AVR32(AVR32Jtag):
         if (offset >= USER_PAGE_OFFSET) and (offset < USER_PAGE_OFFSET + self.PageSize):
             self.EraseUserPage()
 
-            lastpagetoerase = (offset+size) // self.PageSize
+            lastpagetoerase = (offset + size) // self.PageSize
             # compute start offset of page to write to
             page = offset & ~(self.PageSize - 1)
             pagenr = offset // self.PageSize
-            while (pagenr <= lastpagetoerase):
+            while pagenr <= lastpagetoerase:
                 Command = WRITE_PROTECT_KEY | CMD_ERASE_PAGE
-                Command |= ((pagenr << FCMD_PAGEN_OFFSET) & FCMD_PAGEN_MASK)
+                Command |= (pagenr << FCMD_PAGEN_OFFSET) & FCMD_PAGEN_MASK
                 # include the correct page number in the command
                 self._WaitFlashReady()
                 self._WriteCommand(Command)  # execute page erase command
@@ -208,24 +209,30 @@ class AVR32(AVR32Jtag):
 
     def SetGPFuseByte(self, index, value):
         if index > 3 or index < 0:
-            raise Exception("Invalid fuse byte")
-        
-        command = WRITE_PROTECT_KEY | CMD_PROGRAM_GP_FUSE_BYTE | (index << FCMD_PAGEN_OFFSET) | ((value & 0xFF) << (FCMD_PAGEN_OFFSET+3))
+            raise RuntimeError("Invalid fuse byte")
+
+        command = (
+            WRITE_PROTECT_KEY
+            | CMD_PROGRAM_GP_FUSE_BYTE
+            | (index << FCMD_PAGEN_OFFSET)
+            | ((value & 0xFF) << (FCMD_PAGEN_OFFSET + 3))
+        )
 
         self._WaitFlashReady()
         self._WriteCommand(command)
         self._WaitFlashReady()
 
-    def WriteFuses(self, fuses: int):
+    def WriteFuses(self, fuses: int) -> None:
         """Assumes fuses are 32 bits"""
         for i in range(4):
-            self.SetGPFuseByte(i, (fuses >> (8*i)) & 0xFF)
+            self.SetGPFuseByte(i, (fuses >> (8 * i)) & 0xFF)
 
-    def _ProgramPage(self, address: int, cmd: int, offset: int, data: bytes):
+    def _ProgramPage(self, address: int, cmd: int, offset: int, data: bytes) -> None:
         bufferPacket = data
-        if (offset > 0) or (offset+len(data) < self.PageSize):
-            bufferPacket = self._ReadBlockWords(address, self.PageSize // 4)
-            bufferPacket[offset:offset+len(data)] = data
+        if (offset > 0) or (offset + len(data) < self.PageSize):
+            bufferPacketArray = bytearray(self._ReadBlockWords(address, self.PageSize // 4))
+            bufferPacketArray[offset : offset + len(data)] = data
+            bufferPacket = bufferPacketArray
 
         self._ClearPageBuffer()
         self._WriteBlockWords(address, bufferPacket)
@@ -235,16 +242,22 @@ class AVR32(AVR32Jtag):
         self._WriteCommand(command)
         self._WaitFlashReady()
 
-    def ProgramUserPage(self, page_offset: int, DataBuffer: bytes):
+    def ProgramUserPage(self, page_offset: int, DataBuffer: bytes) -> None:
         self._ProgramPage(self.FlashBase + USER_PAGE_OFFSET, CMD_WRITE_USER_PAGE, page_offset, DataBuffer)
 
-    def ProgramSequence(self, address: int, data_buffer: bytes, progress_callback: typing.Callable[[int, int], None]):
-        if (address >= self.FlashBase + USER_PAGE_OFFSET) and (self.FlashBase + address < USER_PAGE_OFFSET + self.PageSize):
+    def ProgramSequence(
+        self, address: int, data_buffer: bytes, progress_callback: typing.Callable[[int, int], None]
+    ) -> None:
+        if (address >= self.FlashBase + USER_PAGE_OFFSET) and (
+            self.FlashBase + address < USER_PAGE_OFFSET + self.PageSize
+        ):
             self.ProgramUserPage(address - (self.FlashBase + USER_PAGE_OFFSET), data_buffer)
             return
 
-        if (address >= self.FlashBase + self.DeviceSize) or (address+len(data_buffer) > self.FlashBase + self.DeviceSize):
-            raise Exception("Region to be programmed lies outside flash address space")
+        if (address >= self.FlashBase + self.DeviceSize) or (
+            address + len(data_buffer) > self.FlashBase + self.DeviceSize
+        ):
+            raise RuntimeError("Region to be programmed lies outside flash address space")
 
         page_number = (address - self.FlashBase) // self.PageSize
         first_page = page_number
@@ -259,10 +272,14 @@ class AVR32(AVR32Jtag):
             # Write bytes
             command = CMD_WRITE_PAGE
             command |= page_number << FCMD_PAGEN_OFFSET
-            self._ProgramPage(page_number * self.PageSize + self.FlashBase, command, address % self.PageSize, data_buffer[index:index + bytes_in_page])
+            self._ProgramPage(
+                page_number * self.PageSize + self.FlashBase,
+                command,
+                address % self.PageSize,
+                data_buffer[index : index + bytes_in_page],
+            )
 
-            if progress_callback:
-                progress_callback(page_number - first_page, last_page - first_page)
+            progress_callback(page_number - first_page, last_page - first_page)
 
             address = 0
             page_number += 1
@@ -276,4 +293,4 @@ class AVR32(AVR32Jtag):
         data_offset = address - aligned_address
 
         data = self._ReadBlockWords(aligned_address, (aligned_end - aligned_address) // 4)
-        return data[data_offset:data_offset+size]
+        return data[data_offset : data_offset + size]
