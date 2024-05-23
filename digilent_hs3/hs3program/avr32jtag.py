@@ -2,7 +2,8 @@
 import logging
 import struct
 
-from hs3program.jtag_adapter import JtagAdapter, JtagState
+from hs3program.jtag_adapter import JtagAdapter
+from hs3program.jtag_adapter import JtagState
 
 # JTAG instructions
 IDCODE = 0x01
@@ -40,6 +41,7 @@ IDCODES = {
     0x200B03F: "AT32UC3C264C",
 }
 
+
 class AVR32Jtag:
     def __init__(self, adapter: JtagAdapter):
         self._tap = adapter
@@ -56,17 +58,16 @@ class AVR32Jtag:
         self.model = self._idcode & 0x0FFFFFFF
         self.revision = (self._idcode >> 28) & 0xF
 
-        chip = IDCODES.get(self.model, 'Unknown')
+        chip = IDCODES.get(self.model, "Unknown")
 
         print(f"Detected ID code: {self._idcode:8X} = {chip}")
 
         if chip == "Unknown":
-            raise Exception("Could not detect chip type")
-    
+            raise RuntimeError("Could not detect chip type")
+
     def ChipErase(self):
         while True:
-            ret = self._tap.IR(CHIP_ERASE,
-                               IRLENGTH, JtagState.UpdateIR)
+            ret = self._tap.IR(CHIP_ERASE, IRLENGTH, JtagState.UpdateIR)
             self.log.debug(f" IP: {ret:2X}")
             if ret & 0x4:
                 self.log.debug("Busy")
@@ -74,23 +75,22 @@ class AVR32Jtag:
             if ret & 0x8:
                 self.log.warning("Last operation failed")
             if ret & 0x10:
-                raise Exception("Chip is protected")
+                raise RuntimeError("Chip is protected")
             break
         self._tap.SetState(JtagState.Idle)
 
-    def Reset(self, reset_bit: int):
+    def Reset(self, reset_bit: int) -> None:
         ret = self._tap.IR(AVR_RESET, IRLENGTH)
         self.log.debug(f" IP: {ret:2X}")
         if ret & 0x10:
-            raise Exception("Chip is protected")
-        
+            raise RuntimeError("Chip is protected")
+
         ret = self._tap.DR(reset_bit, 1)
         self.log.debug(f" DP: {ret:2X}")
 
     def _ReadMemoryWord(self, address):
         while True:
-            ret = self._tap.IR(MEMORY_WORD_ACCESS,
-                               IRLENGTH, JtagState.UpdateIR)
+            ret = self._tap.IR(MEMORY_WORD_ACCESS, IRLENGTH, JtagState.UpdateIR)
             self.log.debug(f" IP: {ret:2X}")
             if ret & 0x4:
                 self.log.debug("Busy")
@@ -98,7 +98,7 @@ class AVR32Jtag:
             if ret & 0x8:
                 self.log.warning("Last operation failed")
             if ret & 0x10:
-                raise Exception("Chip is protected")
+                raise RuntimeError("Chip is protected")
             break
 
         # Address phase
@@ -121,14 +121,13 @@ class AVR32Jtag:
                 self.log.debug("Busy")
                 continue
             if (ret >> 32) & 2:
-                raise Exception("Error while accessing memory")
+                raise RuntimeError("Error while accessing memory")
             self._tap.SetState(JtagState.Idle)
             return ret & 0xFFFFFFFF
 
     def _WriteMemoryWord(self, address, value):
         while True:
-            ret = self._tap.IR(MEMORY_WORD_ACCESS,
-                               IRLENGTH, JtagState.UpdateIR)
+            ret = self._tap.IR(MEMORY_WORD_ACCESS, IRLENGTH, JtagState.UpdateIR)
             self.log.debug(f" IP: {ret:2X}")
             if ret & 0x4:
                 self.log.debug("Busy")
@@ -136,11 +135,11 @@ class AVR32Jtag:
             if ret & 0x8:
                 self.log.warning("Last operation failed")
             if ret & 0x10:
-                raise Exception("Chip is protected")
+                raise RuntimeError("Chip is protected")
             break
 
         # Address phase
-        dr = (((SLV_HSB << 30) | ((address & 0xFFFFFFFF) >> 2)) << 1)
+        dr = ((SLV_HSB << 30) | ((address & 0xFFFFFFFF) >> 2)) << 1
         while True:
             ret = self._tap.DR(dr, 35, JtagState.UpdateDR)
             self.log.debug(f" AP: {ret:9X}")
@@ -160,7 +159,7 @@ class AVR32Jtag:
                 self.log.debug("Busy")
                 continue
             if ret & 2:
-                raise Exception("Error while accessing memory")
+                raise RuntimeError("Error while accessing memory")
             self._tap.SetState(JtagState.Idle)
             break
 
@@ -170,7 +169,7 @@ class AVR32Jtag:
         # for i in range(0, word_count * 4, 4):
         #     res = self._ReadMemoryWord(address + i)
         #     struct.pack_into(">L", result, i, res & 0xFFFFFFFF)
-        
+
         # return result
 
         res = self._ReadMemoryWord(address)
@@ -184,9 +183,9 @@ class AVR32Jtag:
                     self.log.debug("Busy")
                     continue
                 if ret & 0x8:
-                    raise Exception("MEMORY_WORD_ACCESS operation failed")
+                    raise RuntimeError("MEMORY_WORD_ACCESS operation failed")
                 if ret & 0x10:
-                    raise Exception("Chip is protected")
+                    raise RuntimeError("Chip is protected")
                 break
 
             word = 1
@@ -198,23 +197,23 @@ class AVR32Jtag:
                 for _ in range(left):
                     self._tap.SetState(JtagState.SelectDR)
                     self._tap.SetState(JtagState.ShiftDR)
-                    ret = self._tap.ScheduleDRIn(5)
+                    self._tap.ScheduleDRIn(5)
 
                 res = self._tap.ReadScheduled(total)
                 for idx in range(0, total, 5):
-                    ret = res[idx+4]
+                    ret = res[idx + 4]
                     if ret & 1:
                         self.log.debug("Busy")
                         continue
                     if ret & 2:
-                        raise Exception("Error while accessing memory")
+                        raise RuntimeError("Error while accessing memory")
 
-                    result[word*4:word*4+4] = reversed(res[idx:idx+4])
+                    result[word * 4 : word * 4 + 4] = reversed(res[idx : idx + 4])
                     word += 1
-                    
+
             self._tap.SetState(JtagState.Idle)
             self._tap.Flush()
-        
+
             # for word in range(1, word_count):
             #     # Data phase
             #     # self._tap.SetState(JtagState.SelectDR)
@@ -226,13 +225,13 @@ class AVR32Jtag:
             #             continue
             #         if (ret >> 32) & 2:
             #             raise Exception("Error while accessing memory")
-                    
+
             #         struct.pack_into(">L", result, word*4, ret & 0xFFFFFFFF)
             #         break
 
         return result
 
-    def _WriteBlockWords(self, address: int, data :bytes):
+    def _WriteBlockWords(self, address: int, data: bytes) -> None:
         # for i in range(0, len(data), 4):
         #     value = struct.unpack_from(">L", data, i)[0]
         #     self._WriteMemoryWord(address + i, value)
@@ -240,7 +239,7 @@ class AVR32Jtag:
         if len(data) <= 0:
             return
         if (len(data) % 4) != 0:
-            raise Exception("Data to be written is not a multiple of 4 bytes")
+            raise RuntimeError("Data to be written is not a multiple of 4 bytes")
 
         value = struct.unpack_from(">L", data, 0)[0]
         self._WriteMemoryWord(address, value)
@@ -255,13 +254,13 @@ class AVR32Jtag:
                     self.log.debug("Busy")
                     continue
                 if ret & 0x8:
-                    raise Exception("MEMORY_WORD_ACCESS operation failed")
+                    raise RuntimeError("MEMORY_WORD_ACCESS operation failed")
                 if ret & 0x10:
-                    raise Exception("Chip is protected")
+                    raise RuntimeError("Chip is protected")
                 break
 
             self._tap.SetState(JtagState.Idle)
-        
+
             for word in range(1, word_count):
                 # Data phase
                 self._tap.SetState(JtagState.SelectDR)
@@ -274,12 +273,12 @@ class AVR32Jtag:
                         self._tap.SetState(JtagState.SelectDR)
                         continue
                     if ret & 2:
-                        raise Exception("Error while accessing memory")
+                        raise RuntimeError("Error while accessing memory")
                     break
 
                 value = struct.unpack_from(">L", data, word * 4)[0]
                 self._tap.DROut(value, 32, JtagState.UpdateDR)
-        
+
             # for word in range(1, word_count):
             #     # Data phase
             #     self._tap.SetState(JtagState.SelectDR)
