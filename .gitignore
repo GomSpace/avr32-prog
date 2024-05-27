@@ -2,7 +2,9 @@
 *.log
 *.pdf
 *.egg-info
-build
-.vscode
-venv
 *.elf
+
+build/
+.vscode/
+venv/
+deps/

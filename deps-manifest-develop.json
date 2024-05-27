@@ -1,0 +1,13 @@
+{
+    "version": 3,
+    "sources": {
+        "py_common": {
+            "type": "git",
+            "remote": "git@github.com",
+            "repo": "GomSpace/py_common",
+            "branch": "develop"
+        }
+    },
+    "binaries": {
+    }
+}
