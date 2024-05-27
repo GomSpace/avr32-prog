@@ -66,6 +66,7 @@ class FTDIJtagAdapter(JtagAdapter):
         frequency: float = 6e6,
         nSRST: Optional[Tuple[int, int]] = None,
         nTRST: Optional[Tuple[int, int]] = None,
+        serial: Optional[str] = None,
     ):
         JtagAdapter.__init__(self)
         self._dev = Ftdi()
@@ -100,7 +101,9 @@ class FTDIJtagAdapter(JtagAdapter):
 
         self._current = self._initial
 
-        self._dev.open_mpsse(vid, pid, direction=self._direction, initial=self._initial, frequency=frequency)
+        self._dev.open_mpsse(
+            vid, pid, direction=self._direction, initial=self._initial, frequency=frequency, serial=serial
+        )
 
         self._stateDefined = False
         self._currentState = JtagState.Unknown

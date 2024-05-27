@@ -2,31 +2,64 @@
 # Copyright (C) 2012-2022 Jeppe Johansen <jeppe@j-software.dk>
 import argparse
 import logging
+import subprocess
 import sys
 import time
+from typing import Optional
 
 from elftools.elf.elffile import ELFFile
 from hs3program.avr32 import AVR32
 from hs3program.ftdi_jtag_adapter import FTDIJtagAdapter
 from hs3program.jtag_adapter import JtagAdapter
 
+PROGRAMMER_USB_IDS = {
+    "busblaster_v25": "0403:6010",
+    "digilent_hs3": "0403:6014",
+    "openmoko_dbv3": "1457:5118",
+}
 ADAPTERS = {
-    "busblaster_v25": lambda frequency: FTDIJtagAdapter(
-        0x0403, 0x6010, 0x0000, 0x0010, frequency=frequency, nSRST=(0x0200, 0x0800), nTRST=(0x0100, 0x0400)
+    "busblaster_v25": lambda frequency, serial: FTDIJtagAdapter(
+        0x0403,
+        0x6010,
+        0x0000,
+        0x0010,
+        frequency=frequency,
+        nSRST=(0x0200, 0x0800),
+        nTRST=(0x0100, 0x0400),
+        serial=serial,
     ),
-    "digilent_hs3": lambda frequency: FTDIJtagAdapter(
-        0x0403, 0x6014, 0x0080, 0x0080, frequency=frequency, nSRST=(0x2000, 0x1000)
+    "digilent_hs3": lambda frequency, serial: FTDIJtagAdapter(
+        0x0403, 0x6014, 0x0080, 0x0080, frequency=frequency, nSRST=(0x2000, 0x1000), serial=serial
     ),
-    "openmoko_dbv3": lambda frequency: FTDIJtagAdapter(
-        0x1457, 0x5118, 0x0000, 0x0010, frequency=frequency, nSRST=(0x0800, 0x0400), nTRST=(0x0200, 0x0100)
+    "openmoko_dbv3": lambda frequency, serial: FTDIJtagAdapter(
+        0x1457,
+        0x5118,
+        0x0000,
+        0x0010,
+        frequency=frequency,
+        nSRST=(0x0800, 0x0400),
+        nTRST=(0x0200, 0x0100),
+        serial=serial,
     ),
 }
 
 
-def get_adapter(config, frequency) -> JtagAdapter:
+def get_ftdi_device_serials(programmer: str) -> list[str]:
+    assert programmer in PROGRAMMER_USB_IDS, "Unknown programmer"
+    usb_ids = PROGRAMMER_USB_IDS[programmer]
+    result = subprocess.run(f"lsusb -d {usb_ids} -v | grep iSerial", capture_output=True, shell=True, check=True)
+    serials = []
+    for line in result.stdout.decode("utf-8").splitlines():
+        if "iSerial" not in line:
+            continue
+        serials.append(line.split()[-1])
+    return serials
+
+
+def get_adapter(config: str, frequency: float, serial: Optional[str] = None) -> JtagAdapter:
     if config in ADAPTERS:
-        return ADAPTERS[config](frequency)
-    raise Exception("Unknown adapter: " + config)
+        return ADAPTERS[config](frequency, serial)
+    raise RuntimeError("Unknown adapter: " + config)
 
 
 def program_segment(dev: AVR32, address: int, mem_size: int, data: bytes, do_erase: bool, verify: bool) -> None:
@@ -70,21 +103,40 @@ def program_segment(dev: AVR32, address: int, mem_size: int, data: bytes, do_era
             sys.stdout.flush()
 
 
-def program(programmer, flash=None, no_verify=False, chip_erase=True, detect=False, reset=False, fuses=None, dump=None):
-    adapter = get_adapter(programmer, 12e6)
-    try:
-        adapter.SetSignal("TCK", False)
+def initialize_adapter(adapter: JtagAdapter) -> None:
+    adapter.SetSignal("TCK", False)
+    # Do the AVR32 reset sequence
+    adapter.SRST("0")
+    time.sleep(0.1)
+    adapter.SRST("z")
 
-        # Do the AVR32 reset sequence
-        adapter.SRST("0")
-        time.sleep(0.1)
-        adapter.SRST("z")
 
-        if detect:
+def program(
+    programmer,
+    flash=None,
+    no_verify=False,
+    chip_erase=True,
+    detect=False,
+    reset=False,
+    fuses=None,
+    dump=None,
+    serial=None,
+):
+    if detect:
+        serials = get_ftdi_device_serials(programmer)
+        for serial in serials:
+            adapter = get_adapter(programmer, 12e6, serial)
+            initialize_adapter(adapter)
             adapter.DetectDevices()
-            print(f"Detection completed. Found {len(adapter.Devices)} devices")
+            print(f"Found {len(adapter.Devices)} devices on adapter with serial {serial}")
             for i, dev in enumerate(adapter.Devices):
-                print(f"{i} Device: {dev.IDCode:8X} - IR Length: {dev.IRLength}")
+                print(f"\t{i} Device: {dev.IDCode:8X} - IR Length: {dev.IRLength}")
+            adapter.Close()
+        return
+
+    adapter = get_adapter(programmer, 12e6, serial)
+    try:
+        initialize_adapter(adapter)
 
         if flash or chip_erase or reset or fuses or dump:
             dev = AVR32(adapter)
@@ -159,6 +211,7 @@ def main():
     parser.add_argument("--no-verify", "-V", action="store_true", help="Skip verifying flash")
     parser.add_argument("--fuses", "-GP", default=None, type=str, help="Program fuses")
     parser.add_argument("--verbose", "-v", action="store_true", help="Verbose log output")
+    parser.add_argument("--serial", "-s", default=None, type=str, help="Adapter serial number")
     args = parser.parse_args()
 
     level = logging.DEBUG if args.verbose else logging.INFO
