@@ -1,6 +1,10 @@
 avr32-prog
 ==========
 
+**2.3.0 (unreleased)**
+
+- Feature: Add support for multiple HS3 adapters
+
 **2.2.0 (2023-09-14)**
 
 - Feature: Remove dry-run from avr toolchain install script
