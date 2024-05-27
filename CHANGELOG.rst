@@ -1,7 +1,7 @@
 avr32-prog
 ==========
 
-**2.3.0 (unreleased)**
+**2.3.0 (2024-05-27)**
 
 - Feature: Add support for multiple HS3 adapters
 
