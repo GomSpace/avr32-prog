@@ -8,6 +8,7 @@ import time
 from typing import Optional
 
 from elftools.elf.elffile import ELFFile
+
 from hs3program.avr32 import AVR32
 from hs3program.ftdi_jtag_adapter import FTDIJtagAdapter
 from hs3program.jtag_adapter import JtagAdapter
@@ -121,12 +122,16 @@ def program(
     fuses=None,
     dump=None,
     serial=None,
+    only_initialize=False,
 ):
+    adapter = get_adapter(programmer, 12e6, serial)
+    initialize_adapter(adapter)
+    if only_initialize:
+        return
+
     if detect:
         serials = get_ftdi_device_serials(programmer)
         for serial in serials:
-            adapter = get_adapter(programmer, 12e6, serial)
-            initialize_adapter(adapter)
             adapter.DetectDevices()
             print(f"Found {len(adapter.Devices)} devices on adapter with serial {serial}")
             for i, dev in enumerate(adapter.Devices):
@@ -134,10 +139,7 @@ def program(
             adapter.Close()
         return
 
-    adapter = get_adapter(programmer, 12e6, serial)
     try:
-        initialize_adapter(adapter)
-
         if flash or chip_erase or reset or fuses or dump:
             dev = AVR32(adapter)
 
@@ -212,6 +214,7 @@ def main():
     parser.add_argument("--fuses", "-GP", default=None, type=str, help="Program fuses")
     parser.add_argument("--verbose", "-v", action="store_true", help="Verbose log output")
     parser.add_argument("--serial", "-s", default=None, type=str, help="Adapter serial number")
+    parser.add_argument("--only-initialize", "-I", action="store_true", help="Perform the AVR32 JTAG initialization ritual and exit")
     args = parser.parse_args()
 
     level = logging.DEBUG if args.verbose else logging.INFO

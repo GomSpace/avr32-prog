@@ -8,3 +8,4 @@ build/
 .vscode/
 venv/
 deps/
+avr_toolchain/
