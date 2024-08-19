@@ -123,9 +123,14 @@ def program(
     dump=None,
     serial=None,
     only_initialize=False,
+    only_close=False,
 ):
     adapter = get_adapter(programmer, 12e6, serial)
     initialize_adapter(adapter)
+
+    if only_close:
+        adapter.Close()
+
     if only_initialize:
         return
 
@@ -208,13 +213,14 @@ def main():
         type=str,
         help="Read the current FLASH contents (if not protected) out into a binary file.",
     )
-    parser.add_argument("--detect", "-d", action="store_true", help="Do detection of devices on JTAG bus")
+    parser.add_argument("--detect", "-d", action="store_true", help="Do detection of devices on JTAG chain")
     parser.add_argument("--flash", "-f", default=None, type=str, help="Path to ELF file to be programmed")
     parser.add_argument("--no-verify", "-V", action="store_true", help="Skip verifying flash")
     parser.add_argument("--fuses", "-GP", default=None, type=str, help="Program fuses")
     parser.add_argument("--verbose", "-v", action="store_true", help="Verbose log output")
     parser.add_argument("--serial", "-s", default=None, type=str, help="Adapter serial number")
     parser.add_argument("--only-initialize", "-I", action="store_true", help="Perform the AVR32 JTAG initialization ritual and exit")
+    parser.add_argument("--only-close", "-C", action="store_true", help="Tickle the RESET pin and exit")
     args = parser.parse_args()
 
     level = logging.DEBUG if args.verbose else logging.INFO
