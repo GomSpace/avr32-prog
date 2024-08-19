@@ -132,11 +132,16 @@ def program(
         adapter.Close()
 
     if only_initialize:
+        initialize_adapter(adapter)
         return
 
     if detect:
+        adapter.Close()
+        del adapter
         serials = get_ftdi_device_serials(programmer)
         for serial in serials:
+            adapter = get_adapter(programmer, 12e6, serial)
+            initialize_adapter(adapter)
             adapter.DetectDevices()
             print(f"Found {len(adapter.Devices)} devices on adapter with serial {serial}")
             for i, dev in enumerate(adapter.Devices):
