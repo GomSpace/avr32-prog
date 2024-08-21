@@ -30,7 +30,7 @@ ADAPTERS = {
         serial=serial,
     ),
     "digilent_hs3": lambda frequency, serial: FTDIJtagAdapter(
-        0x0403, 0x6014, 0x0080, 0x0080, frequency=frequency, nSRST=(0x2000, 0x1000), serial=serial
+        vid=0x0403, pid=0x6014, init=0x0080, direction=0x0080, frequency=frequency, nSRST=(0x2000, 0x1000), serial=serial
     ),
     "openmoko_dbv3": lambda frequency, serial: FTDIJtagAdapter(
         0x1457,
@@ -113,27 +113,51 @@ def initialize_adapter(adapter: JtagAdapter) -> None:
 
 
 def program(
-    programmer,
-    flash=None,
-    no_verify=False,
-    chip_erase=True,
-    detect=False,
-    reset=False,
-    fuses=None,
-    dump=None,
-    serial=None,
-    only_initialize=False,
-    only_close=False,
+    programmer: str,
+    flash: str | None = None,
+    no_verify: bool = False,
+    chip_erase: bool = True,
+    detect: bool = False,
+    reset: bool = False,
+    fuses: str | None = None,
+    dump: str | None = None,
+    serial: str | None = None,
+    only_initialize: bool = False,
+    only_close: bool = False,
+    select: int | None = None,
 ):
+    """Program an AVR32 device using a JTAG adapter.
+
+    Args:
+        programmer: The JTAG adapter to use.
+        flash: Path to ELF file to be programmed.
+        no_verify: Skip verifying flash.
+        chip_erase: Perform full chip erase.
+        detect: Do detection of devices on JTAG chain.
+        reset: Perform chip reset after programming.
+        fuses: Program fuses.
+        dump: Read the current FLASH contents (if not protected) out into a binary file.
+        serial: Adapter serial number.
+        only_initialize: Perform the AVR32 JTAG initialization ritual and exit.
+        only_close: Tickle the RESET pin and exit.
+        select: Select a device on the JTAG chain (see --detect).
+
+    """
     adapter = get_adapter(programmer, 12e6, serial)
     initialize_adapter(adapter)
 
     if only_close:
+        adapter.SetSignal("TCK", True)
+        adapter.SRST("0")
+        time.sleep(0.1)
+        adapter.SRST("z")
         adapter.Close()
 
     if only_initialize:
-        initialize_adapter(adapter)
         return
+
+    if select is not None:
+        adapter.SelectDevice(select)
 
     if detect:
         adapter.Close()
@@ -152,9 +176,7 @@ def program(
     try:
         if flash or chip_erase or reset or fuses or dump:
             dev = AVR32(adapter)
-
             print(f" Chip Size: {dev.DeviceSize}. Page size: {dev.PageSize}")
-
             if dump:
                 print("Dumping flash contents")
                 with open(dump, "wb") as f:
@@ -224,8 +246,20 @@ def main():
     parser.add_argument("--fuses", "-GP", default=None, type=str, help="Program fuses")
     parser.add_argument("--verbose", "-v", action="store_true", help="Verbose log output")
     parser.add_argument("--serial", "-s", default=None, type=str, help="Adapter serial number")
-    parser.add_argument("--only-initialize", "-I", action="store_true", help="Perform the AVR32 JTAG initialization ritual and exit")
     parser.add_argument("--only-close", "-C", action="store_true", help="Tickle the RESET pin and exit")
+    parser.add_argument(
+        "--only-initialize",
+        "-I",
+        action="store_true",
+        help="Perform the AVR32 JTAG initialization ritual and exit"
+    )
+    parser.add_argument(
+        "--select",
+        "-S",
+        default=None,
+        type=int,
+        help="Select a device on the JTAG chain (see --detect)"
+    )
     args = parser.parse_args()
 
     level = logging.DEBUG if args.verbose else logging.INFO
