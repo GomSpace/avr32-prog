@@ -1,6 +1,10 @@
 avr32-prog
 ==========
 
+**UNRELEASED**
+
+- Improvement: Update documentation for installing AVR32 toolchain
+
 **2.3.0 (2024-05-27)**
 
 - Feature: Add support for multiple HS3 adapters
