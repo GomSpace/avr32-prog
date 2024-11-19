@@ -15,18 +15,18 @@ The A3200 toolchain has been verified on the following Ubuntu distributions:
 
 To install the toolchain, install Ubuntu prerequisites::
 
-  $ sudo apt install build-essential
+  $ sudo apt install build-essential libsocketcan-dev libzmq3-dev lsb-release pkg-config python-is-python3 python3-dev sudo zip
 
 And then install the AVR32 toolchain::
 
-  $ cd avr32_toolchain
-  $ ./install-avr32.sh
+  $ cd avr_toolchain
+  $ ./install.sh
 
 Please enter password if prompted as the installation may fail otherwise.
 
 After installation, verify that the `avrtools` rule file is installed::
 
-  $ ls  /etc/udev/rules.d/
+  $ ls /etc/udev/rules.d/
   99-avrtools.rules
 
 To verify that the toolchain is correctly installed, please enter the following command::
