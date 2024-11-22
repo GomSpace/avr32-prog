@@ -63,7 +63,7 @@ fi
 
 # Ubuntu 18 and onwards is missing libmpfr.so.4, but a symbolic link can be created from libmpfr.so.6
 VERSION=$(lsb_release -sr)
-if [[ "$VERSION" =~ ^("18.04"|"20.04"|"22.04")$ ]]; then
+if [[ "$VERSION" =~ ^("18.04"|"20.04"|"22.04"|"24.04")$ ]]; then
     echo "Ubuntu $VERSION detected. Creating symbolic link for libmpfr.so.4 -> libmpfr.so.6"
     sudo ln -s /usr/lib/x86_64-linux-gnu/libmpfr.so.6 /usr/lib/x86_64-linux-gnu/libmpfr.so.4
 fi
