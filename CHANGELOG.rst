@@ -1,9 +1,10 @@
 avr32-prog
 ==========
 
-**UNRELEASED**
+**2.3.1 (2024-11-22)**
 
 - Improvement: Update documentation for installing AVR32 toolchain
+- Bug: Add symbolic link from libmpfr.so.4 to libmpfr.so.6 in avr toolchain install script on Ubuntu 24.04
 
 **2.3.0 (2024-05-27)**
 
