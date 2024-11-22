@@ -11,11 +11,16 @@ The A3200 toolchain has been verified on the following Ubuntu distributions:
 - Ubuntu 16.04.7 LTS
 - Ubuntu 18.04.6 LTS
 - Ubuntu 20.04.6 LTS
-- Ubuntu 22.04.3 LTS
+- Ubuntu 22.04.6 LTS
+- Ubuntu 24.04.1 LTS
 
 To install the toolchain, install Ubuntu prerequisites::
 
   $ sudo apt install build-essential libsocketcan-dev libzmq3-dev lsb-release pkg-config python-is-python3 python3-dev sudo zip
+
+Some of the packages may not be available on ubuntu 18.04 or older. To fix python version problems during toolchain installation, you can manually create a symlink::
+
+  $ sudo ln -s -T /usr/bin/python3 /usr/bin/python
 
 And then install the AVR32 toolchain::
 
