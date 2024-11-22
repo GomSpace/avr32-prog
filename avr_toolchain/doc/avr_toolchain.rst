@@ -11,11 +11,17 @@ The A3200 toolchain has been verified on the following Ubuntu distributions:
 - Ubuntu 16.04.7 LTS
 - Ubuntu 18.04.6 LTS
 - Ubuntu 20.04.6 LTS
-- Ubuntu 22.04.3 LTS
+- Ubuntu 22.04.6 LTS
+- Ubuntu 24.04.1 LTS
 
 To install the toolchain, install Ubuntu prerequisites::
 
   $ sudo apt install build-essential libsocketcan-dev libzmq3-dev lsb-release pkg-config python-is-python3 python3-dev sudo zip
+
+The ``python-is-python3`` package may not be available on ubuntu 18.04 or older.
+To fix python version problems during toolchain installation, you can manually create a symlink::
+
+  $ sudo ln -s -T /usr/bin/python3 /usr/bin/python
 
 And then install the AVR32 toolchain::
 
@@ -73,3 +79,38 @@ The avr32-gcc compiler should now be available::
 
   $ avr32-gcc
   avr32-gcc: no input files
+
+
+Using the toolchain in a docker container
+-----------------------------------------
+
+You can also use the toolchain in a docker container.
+The following dockerfiles are available.
+To build the docker image, run the following command (replace the version numbers with the desired version)::
+
+  $ docker build -t avr_toolchain:24.04 -f docker/ubuntu24.04.dockerfile.
+
+Ubuntu24.04
+===========
+.. include:: ./docker/ubuntu24.04.dockerfile
+   :code: docker
+
+Ubuntu22.04
+===========
+.. include:: ./docker/ubuntu22.04.dockerfile
+   :code: docker
+
+Ubuntu20.04
+===========
+.. include:: ./docker/ubuntu20.04.dockerfile
+   :code: docker
+
+Ubuntu18.04
+===========
+.. include:: ./docker/ubuntu18.04.dockerfile
+   :code: docker
+
+Ubuntu16.04
+===========
+.. include:: ./docker/ubuntu16.04.dockerfile
+   :code: docker
