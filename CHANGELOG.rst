@@ -1,7 +1,7 @@
 avr32-prog
 ==========
 
-**2.3.2 (TBD)**
+**2.3.2 (2024-11-26)**
 
 - Improvement: Update documentation for running AVR32 toolchain in a docker file
 
